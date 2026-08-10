@@ -1,26 +1,45 @@
 import "./style.css";
 import { NOTE_NAMES } from "./audio/frequencies";
-import { playPattern, type BitPattern } from "./audio/transmitter";
+import { playPattern } from "./audio/transmitter";
+import { ALPHABET, activeNotes, charToIndex, indexToPattern, type Character } from "./protocol/alphabet";
 
-const TEST_DURATION_SECONDS = 1;
+const SEND_DURATION_SECONDS = 1;
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
+
 app.innerHTML = `
   <div>
     <h1>SignalChord</h1>
-    <p>Phase 1: 送信テスト（鳴らしたい音にチェックして送信）</p>
-    <div id="notes">
-      ${NOTE_NAMES.map(
-        (name) => `
-        <label>
-          <input type="checkbox" name="note" value="${name}" checked />
-          ${name}
-        </label>`,
-      ).join("")}
+    <p>送りたい文字を選んで「送る」を押してください</p>
+    <select id="char-select">
+      ${ALPHABET.map((char) => {
+        const pattern = indexToPattern(charToIndex(char));
+        const hint = activeNotes(pattern).join("+");
+        const label = char === " " ? "(スペース)" : char;
+        return `<option value="${char}">${label} — ${hint}</option>`;
+      }).join("")}
+    </select>
+    <div class="freq-display">
+      ${NOTE_NAMES.map((name) => `<div class="freq-box" data-note="${name}">${name}</div>`).join("")}
     </div>
-    <button id="send">テスト送信</button>
+    <button id="send">送る</button>
   </div>
 `;
+
+const select = document.getElementById("char-select") as HTMLSelectElement;
+const freqBoxes = Array.from(document.querySelectorAll<HTMLDivElement>(".freq-box"));
+
+function currentPattern() {
+  return indexToPattern(charToIndex(select.value as Character));
+}
+
+function updateSelectedHighlight(): void {
+  const pattern = currentPattern();
+  freqBoxes.forEach((box, i) => box.classList.toggle("selected", pattern[i]));
+}
+
+select.addEventListener("change", updateSelectedHighlight);
+updateSelectedHighlight();
 
 let audioContext: AudioContext | null = null;
 
@@ -30,8 +49,11 @@ document.getElementById("send")!.addEventListener("click", () => {
     void audioContext.resume();
   }
 
-  const checkboxes = document.querySelectorAll<HTMLInputElement>('input[name="note"]');
-  const pattern = Array.from(checkboxes).map((checkbox) => checkbox.checked) as unknown as BitPattern;
+  const pattern = currentPattern();
+  playPattern(audioContext, pattern, SEND_DURATION_SECONDS);
 
-  playPattern(audioContext, pattern, TEST_DURATION_SECONDS);
+  freqBoxes.forEach((box, i) => box.classList.toggle("playing", pattern[i]));
+  setTimeout(() => {
+    freqBoxes.forEach((box) => box.classList.remove("playing"));
+  }, SEND_DURATION_SECONDS * 1000);
 });

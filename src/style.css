@@ -12,3 +12,28 @@ body {
   text-align: center;
   padding: 1rem;
 }
+
+.freq-display {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.freq-box {
+  border: 2px solid #888;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  transition: background-color 0.15s, color 0.15s, transform 0.15s;
+}
+
+.freq-box.selected {
+  border-color: #4f9dff;
+}
+
+.freq-box.playing {
+  background-color: #4f9dff;
+  color: #fff;
+  transform: scale(1.08);
+}
