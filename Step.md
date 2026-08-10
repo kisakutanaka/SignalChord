@@ -21,7 +21,10 @@ SignalChordの実装ロードマップ。「動くものが一つ増える」粒
 `npm run dev`が正常に動作することを確認済み。GitHub Pagesのプロジェクトページ想定で
 `vite.config.ts`に`base: "/SignalChord/"`を設定し、`.github/workflows/deploy.yml`で
 mainブランチへのpushをトリガーに`actions/deploy-pages`でデプロイする構成を用意した。
-まだGitリポジトリ化・GitHubへのpushは行っていないため、実際のPages公開確認は未実施。
+`git init`し `git@github.com:kisakutanaka/SignalChord.git` にpush済み。リポジトリ側の
+Settings→Pages→SourceをGitHub Actionsに切り替える作業は手動対応が必要（`gh` CLI未導入の
+ため自動化できなかった）。切り替え後、Actionsタブでのデプロイ成功と実機（スマホ）での
+アクセス確認が残タスク。
 
 ---
 
