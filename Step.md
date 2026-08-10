@@ -77,7 +77,7 @@ C5+D5が正しくハイライトされること、送信中に`playing`クラス
 - [x] FFT（Web Audio APIの`AnalyserNode`等）で周波数スペクトルを取得する
 - [x] 5つの対象周波数（C5/D5/E5/G5/A5）付近の信号強度からON/OFFを判定するロジックを作る
       （しきい値の決め方はFindings.mdに検証結果を残す）
-- [ ] 実機確認: 実際にスピーカーで鳴らした音をマイクで拾い、判定結果をログ等で確認する
+- [x] 実機確認: 実際にスピーカーで鳴らした音をマイクで拾い、判定結果をログ等で確認する
 
 メモ: `src/audio/receiver.ts`に`startReceiving()`（`getUserMedia`でマイク入力を取得。
 音声通話向けのecho cancellation/noise suppression/auto gain controlはトーン検出に
@@ -88,7 +88,8 @@ C5+D5が正しくハイライトされること、送信中に`playing`クラス
 `--use-file-for-fake-audio-capture`）でNode.js生成の合成音をマイク入力として与えるPlaywright
 テストを実施し、C5+D5・全5音・単音（A5）・無音の各ケースで意図通りの検出結果を確認した
 （詳細な数値はFindings.md参照）。この検証は理想的な合成音によるものであり、実機の
-スピーカー/マイクでの再検証が必要。
+スピーカー/マイクでの再検証が必要。実機2台（送信/受信）でスピーカー→マイク経由の検出が
+正しく反応することをユーザーが確認。Phase 3完了。
 
 ---
 
