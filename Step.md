@@ -73,13 +73,22 @@ C5+D5が正しくハイライトされること、送信中に`playing`クラス
 
 ## Phase 3: 受信モード — マイク入力とFFT解析
 
-- [ ] マイク入力を取得する（`getUserMedia`）
-- [ ] FFT（Web Audio APIの`AnalyserNode`等）で周波数スペクトルを取得する
-- [ ] 5つの対象周波数（C5/D5/E5/G5/A5）付近の信号強度からON/OFFを判定するロジックを作る
+- [x] マイク入力を取得する（`getUserMedia`）
+- [x] FFT（Web Audio APIの`AnalyserNode`等）で周波数スペクトルを取得する
+- [x] 5つの対象周波数（C5/D5/E5/G5/A5）付近の信号強度からON/OFFを判定するロジックを作る
       （しきい値の決め方はFindings.mdに検証結果を残す）
 - [ ] 実機確認: 実際にスピーカーで鳴らした音をマイクで拾い、判定結果をログ等で確認する
 
-メモ: (未着手)
+メモ: `src/audio/receiver.ts`に`startReceiving()`（`getUserMedia`でマイク入力を取得。
+音声通話向けのecho cancellation/noise suppression/auto gain controlはトーン検出に
+悪影響を与えうるため無効化）と`measure()`（fftSize=4096の`AnalyserNode`から対象周波数
+±1ビンのピークdBを読み、暫定しきい値-60dBでON/OFF判定）を実装。UIはmain.tsに
+「受信テスト（開発中）」として最小限の可視化（周波数ボックスのハイライト+dB値の生ログ）を
+追加した（本実装のUIはPhase 4）。ChromiumのFake Audio Capture機能（
+`--use-file-for-fake-audio-capture`）でNode.js生成の合成音をマイク入力として与えるPlaywright
+テストを実施し、C5+D5・全5音・単音（A5）・無音の各ケースで意図通りの検出結果を確認した
+（詳細な数値はFindings.md参照）。この検証は理想的な合成音によるものであり、実機の
+スピーカー/マイクでの再検証が必要。
 
 ---
 

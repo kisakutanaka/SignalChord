@@ -37,3 +37,9 @@ body {
   color: #fff;
   transform: scale(1.08);
 }
+
+#rx-debug {
+  text-align: left;
+  font-size: 0.8rem;
+  display: inline-block;
+}
