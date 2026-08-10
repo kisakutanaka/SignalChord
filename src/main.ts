@@ -36,6 +36,14 @@ app.innerHTML = `
       <div class="freq-display">${freqBoxesHtml()}</div>
       <button id="send">送る</button>
 
+      <hr />
+      <div class="text-send">
+        <p>複数文字をまとめてタイプして送ることもできます（使える文字: A-Z, 半角スペース, . , ! ?）</p>
+        <input type="text" id="text-input" placeholder="HELLO" />
+        <button id="send-text">まとめて送る</button>
+        <p id="text-send-status"></p>
+      </div>
+
       <details class="loss-controls">
         <summary>発展: 周波数を届かなくする</summary>
         <p>チェックした周波数は実際には送信されません（電波状況が悪い状況のシミュレーション）。</p>
@@ -96,9 +104,13 @@ function currentPattern() {
 }
 
 // 「届かなくする」がチェックされた周波数を除いた、実際に送信されるパターン。
-function effectivePattern(): ReturnType<typeof currentPattern> {
-  const intended = currentPattern();
+function effectivePatternFor(char: Character): ReturnType<typeof currentPattern> {
+  const intended = indexToPattern(charToIndex(char));
   return intended.map((on, i) => on && !lossCheckboxes[i].checked) as unknown as typeof intended;
+}
+
+function effectivePattern(): ReturnType<typeof currentPattern> {
+  return effectivePatternFor(select.value as Character);
 }
 
 function updateSelectedHighlight(): void {
@@ -114,8 +126,21 @@ lossCheckboxes.forEach((checkbox) => checkbox.addEventListener("change", updateS
 updateSelectedHighlight();
 
 let txAudioContext: AudioContext | null = null;
+let txSending = false;
 
-document.getElementById("send")!.addEventListener("click", () => {
+const sendButton = document.getElementById("send") as HTMLButtonElement;
+const sendTextButton = document.getElementById("send-text") as HTMLButtonElement;
+const textInput = document.getElementById("text-input") as HTMLInputElement;
+const textSendStatus = document.getElementById("text-send-status")!;
+
+function setTxSending(sending: boolean): void {
+  txSending = sending;
+  sendButton.disabled = sending;
+  sendTextButton.disabled = sending;
+}
+
+sendButton.addEventListener("click", () => {
+  if (txSending) return;
   txAudioContext ??= new AudioContext();
   if (txAudioContext.state === "suspended") {
     void txAudioContext.resume();
@@ -124,10 +149,64 @@ document.getElementById("send")!.addEventListener("click", () => {
   const pattern = effectivePattern();
   playPattern(txAudioContext, pattern, SEND_DURATION_SECONDS);
 
+  setTxSending(true);
   txFreqBoxes.forEach((box, i) => box.classList.toggle("playing", pattern[i]));
   setTimeout(() => {
     txFreqBoxes.forEach((box) => box.classList.remove("playing"));
+    setTxSending(false);
   }, SEND_DURATION_SECONDS * 1000);
+});
+
+// 入力文字列のうち、大文字化してALPHABETに含まれる文字だけを送信対象として取り出す。
+function sanitizeText(input: string): Character[] {
+  return Array.from(input.toUpperCase()).filter((ch): ch is Character =>
+    (ALPHABET as readonly string[]).includes(ch),
+  );
+}
+
+const GAP_SECONDS = 0.4; // 文字間の無音。受信側が無音として認識するのに十分な長さ(Findings.md参照)。
+
+sendTextButton.addEventListener("click", () => {
+  if (txSending) return;
+  const chars = sanitizeText(textInput.value);
+  if (chars.length === 0) return;
+
+  txAudioContext ??= new AudioContext();
+  if (txAudioContext.state === "suspended") {
+    void txAudioContext.resume();
+  }
+  const audioContext = txAudioContext;
+
+  setTxSending(true);
+  textSendStatus.textContent = `送信内容: "${chars.join("")}"`;
+
+  const stepSeconds = SEND_DURATION_SECONDS + GAP_SECONDS;
+  const leadIn = 0.1;
+  const baseTime = audioContext.currentTime + leadIn;
+
+  chars.forEach((char, i) => {
+    const pattern = effectivePatternFor(char);
+    const startTime = baseTime + i * stepSeconds;
+    playPattern(audioContext, pattern, SEND_DURATION_SECONDS, startTime);
+
+    const startDelayMs = (startTime - audioContext.currentTime) * 1000;
+    setTimeout(() => {
+      txFreqBoxes.forEach((box, j) => box.classList.toggle("playing", pattern[j]));
+      textSendStatus.textContent = `送信中: "${char}" (${i + 1}/${chars.length})`;
+    }, startDelayMs);
+    setTimeout(
+      () => {
+        txFreqBoxes.forEach((box) => box.classList.remove("playing"));
+      },
+      startDelayMs + SEND_DURATION_SECONDS * 1000,
+    );
+  });
+
+  const totalDelayMs = (baseTime - audioContext.currentTime + chars.length * stepSeconds) * 1000;
+  setTimeout(() => {
+    textSendStatus.textContent = `送信完了: "${chars.join("")}"`;
+    setTxSending(false);
+  }, totalDelayMs);
 });
 
 // --- 受信側 ---

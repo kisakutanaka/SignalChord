@@ -50,6 +50,19 @@ body {
   font-size: 0.85rem;
 }
 
+.text-send {
+  font-size: 0.85rem;
+}
+
+.text-send input[type="text"] {
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+}
+
+#text-send-status {
+  min-height: 1.2em;
+}
+
 .explanation {
   max-width: 32rem;
   margin: 1.5rem auto 0;

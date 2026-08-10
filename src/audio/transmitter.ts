@@ -14,16 +14,18 @@ const GAIN_PER_NOTE = 0.15;
 const RAMP_SECONDS = 0.015;
 
 // patternでtrueになっている周波数だけを同時に再生する。durationSeconds後に自動停止する。
+// startTimeを指定すると、複数文字をsetTimeoutに頼らずWeb Audio自身の時間軸で正確に
+// 連続スケジューリングできる（省略時は即座に再生）。
 export function playPattern(
   audioContext: AudioContext,
   pattern: BitPattern,
   durationSeconds: number,
+  startTime: number = audioContext.currentTime,
 ): void {
   if (pattern.length !== NOTE_NAMES.length) {
     throw new Error(`pattern must have ${NOTE_NAMES.length} elements`);
   }
 
-  const startTime = audioContext.currentTime;
   const stopTime = startTime + durationSeconds;
 
   FREQUENCIES.forEach((frequency, index) => {
