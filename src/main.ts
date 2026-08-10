@@ -35,6 +35,18 @@ app.innerHTML = `
       </select>
       <div class="freq-display">${freqBoxesHtml()}</div>
       <button id="send">送る</button>
+
+      <details class="loss-controls">
+        <summary>発展: 周波数を届かなくする</summary>
+        <p>チェックした周波数は実際には送信されません（電波状況が悪い状況のシミュレーション）。</p>
+        ${NOTE_NAMES.map(
+          (name) => `
+          <label>
+            <input type="checkbox" name="lost" value="${name}" />
+            ${name}
+          </label>`,
+        ).join("")}
+      </details>
     </div>
 
     <div id="rx-section" hidden>
@@ -58,17 +70,30 @@ app.innerHTML = `
 const txSection = document.getElementById("tx-section")!;
 const select = document.getElementById("char-select") as HTMLSelectElement;
 const txFreqBoxes = Array.from(txSection.querySelectorAll<HTMLDivElement>(".freq-box"));
+const lossCheckboxes = Array.from(
+  txSection.querySelectorAll<HTMLInputElement>('input[name="lost"]'),
+);
 
 function currentPattern() {
   return indexToPattern(charToIndex(select.value as Character));
 }
 
+// 「届かなくする」がチェックされた周波数を除いた、実際に送信されるパターン。
+function effectivePattern(): ReturnType<typeof currentPattern> {
+  const intended = currentPattern();
+  return intended.map((on, i) => on && !lossCheckboxes[i].checked) as unknown as typeof intended;
+}
+
 function updateSelectedHighlight(): void {
-  const pattern = currentPattern();
-  txFreqBoxes.forEach((box, i) => box.classList.toggle("selected", pattern[i]));
+  const effective = effectivePattern();
+  txFreqBoxes.forEach((box, i) => {
+    box.classList.toggle("selected", effective[i]);
+    box.classList.toggle("lost", lossCheckboxes[i].checked);
+  });
 }
 
 select.addEventListener("change", updateSelectedHighlight);
+lossCheckboxes.forEach((checkbox) => checkbox.addEventListener("change", updateSelectedHighlight));
 updateSelectedHighlight();
 
 let txAudioContext: AudioContext | null = null;
@@ -79,7 +104,7 @@ document.getElementById("send")!.addEventListener("click", () => {
     void txAudioContext.resume();
   }
 
-  const pattern = currentPattern();
+  const pattern = effectivePattern();
   playPattern(txAudioContext, pattern, SEND_DURATION_SECONDS);
 
   txFreqBoxes.forEach((box, i) => box.classList.toggle("playing", pattern[i]));

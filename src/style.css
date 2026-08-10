@@ -38,6 +38,18 @@ body {
   transform: scale(1.08);
 }
 
+.freq-box.lost {
+  border-style: dashed;
+  border-color: #e05555;
+  color: #e05555;
+  text-decoration: line-through;
+}
+
+.loss-controls {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+
 #rx-debug {
   text-align: left;
   font-size: 0.8rem;
