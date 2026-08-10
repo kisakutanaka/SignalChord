@@ -3,6 +3,7 @@ import { NOTE_NAMES } from "./audio/frequencies";
 import { playPattern } from "./audio/transmitter";
 import { measure, startReceiving, type ReceiverHandle } from "./audio/receiver";
 import { ALPHABET, activeNotes, charToIndex, indexToPattern, type Character } from "./protocol/alphabet";
+import { StreamDecoder } from "./protocol/decoder";
 
 const SEND_DURATION_SECONDS = 1;
 
@@ -28,11 +29,16 @@ app.innerHTML = `
   </div>
   <hr />
   <div id="rx-section">
-    <h2>受信テスト（開発中）</h2>
+    <h2>受信</h2>
     <button id="mic-start">マイク開始</button>
     <button id="mic-stop" disabled>停止</button>
     <div class="freq-display">${freqBoxesHtml()}</div>
-    <pre id="rx-debug"></pre>
+    <p id="rx-current-char" class="current-char">―</p>
+    <p>受信履歴: <span id="rx-history"></span></p>
+    <details>
+      <summary>デバッグ情報</summary>
+      <pre id="rx-debug"></pre>
+    </details>
   </div>
 `;
 
@@ -71,10 +77,12 @@ document.getElementById("send")!.addEventListener("click", () => {
   }, SEND_DURATION_SECONDS * 1000);
 });
 
-// --- 受信側（開発中の最小テストUI。本実装のUIはPhase 4で作る） ---
+// --- 受信側 ---
 
 const rxSection = document.getElementById("rx-section")!;
 const rxFreqBoxes = Array.from(rxSection.querySelectorAll<HTMLDivElement>(".freq-box"));
+const rxCurrentChar = document.getElementById("rx-current-char")!;
+const rxHistory = document.getElementById("rx-history")!;
 const rxDebug = document.getElementById("rx-debug")!;
 const micStartButton = document.getElementById("mic-start") as HTMLButtonElement;
 const micStopButton = document.getElementById("mic-stop") as HTMLButtonElement;
@@ -82,6 +90,7 @@ const micStopButton = document.getElementById("mic-stop") as HTMLButtonElement;
 let rxAudioContext: AudioContext | null = null;
 let receiverHandle: ReceiverHandle | null = null;
 let rafId: number | null = null;
+let historyText = "";
 
 function stopReceiving(): void {
   if (rafId !== null) {
@@ -93,6 +102,7 @@ function stopReceiving(): void {
   micStartButton.disabled = false;
   micStopButton.disabled = true;
   rxFreqBoxes.forEach((box) => box.classList.remove("playing"));
+  rxCurrentChar.textContent = "―";
 }
 
 micStartButton.addEventListener("click", () => {
@@ -105,10 +115,20 @@ micStartButton.addEventListener("click", () => {
     micStartButton.disabled = true;
     micStopButton.disabled = false;
 
+    const decoder = new StreamDecoder();
+
     const loop = () => {
       if (!receiverHandle || !rxAudioContext) return;
       const { levelsDb, pattern } = measure(receiverHandle.analyser, rxAudioContext.sampleRate);
       rxFreqBoxes.forEach((box, i) => box.classList.toggle("playing", pattern[i]));
+
+      const acceptedChar = decoder.push(pattern);
+      if (acceptedChar !== undefined) {
+        historyText += acceptedChar;
+        rxHistory.textContent = historyText;
+      }
+      rxCurrentChar.textContent = decoder.currentChar ?? "―";
+
       rxDebug.textContent = NOTE_NAMES.map(
         (name, i) => `${name}: ${pattern[i] ? "ON " : "off"} (${levelsDb[i].toFixed(1)} dB)`,
       ).join("\n");
