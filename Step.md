@@ -13,7 +13,7 @@ SignalChordの実装ロードマップ。「動くものが一つ増える」粒
 
 - [x] 技術スタックを決定する（TypeScript + 軽量ビルドツール、ブラウザのみで完結、GitHub Pages対応の構成）
 - [x] リポジトリの雛形を作成する（`package.json`, ビルド設定, `.gitignore`等）
-- [ ] GitHub Pagesへの最小デプロイができることを確認する（空のページでよい）
+- [x] GitHub Pagesへの最小デプロイができることを確認する（空のページでよい）
 - [ ] 実機確認: スマートフォンから公開URLにアクセスできることを確認する
 
 メモ: 技術スタックはVite + TypeScript（vanilla、フレームワークなし）に決定。UIがシンプルで
@@ -22,9 +22,11 @@ SignalChordの実装ロードマップ。「動くものが一つ増える」粒
 `vite.config.ts`に`base: "/SignalChord/"`を設定し、`.github/workflows/deploy.yml`で
 mainブランチへのpushをトリガーに`actions/deploy-pages`でデプロイする構成を用意した。
 `git init`し `git@github.com:kisakutanaka/SignalChord.git` にpush済み。リポジトリ側の
-Settings→Pages→SourceをGitHub Actionsに切り替える作業は手動対応が必要（`gh` CLI未導入の
-ため自動化できなかった）。切り替え後、Actionsタブでのデプロイ成功と実機（スマホ）での
-アクセス確認が残タスク。
+Settings→Pages→SourceをGitHub Actionsに切り替える作業はユーザー側で対応済み
+（`gh` CLI未導入のため自動化できず手動対応）。デプロイ後、
+`https://kisakutanaka.github.io/SignalChord/` に`curl`でアクセスし200 OK・
+ビルド済みアセット（`/SignalChord/assets/...`）が正しく配信されることを確認した。
+残タスクはスマートフォン実機での確認のみ。
 
 ---
 
