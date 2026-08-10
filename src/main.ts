@@ -13,32 +13,43 @@ const freqBoxesHtml = () =>
   NOTE_NAMES.map((name) => `<div class="freq-box" data-note="${name}">${name}</div>`).join("");
 
 app.innerHTML = `
-  <div id="tx-section">
+  <div>
     <h1>SignalChord</h1>
-    <p>送りたい文字を選んで「送る」を押してください</p>
-    <select id="char-select">
-      ${ALPHABET.map((char) => {
-        const pattern = indexToPattern(charToIndex(char));
-        const hint = activeNotes(pattern).join("+");
-        const label = char === " " ? "(スペース)" : char;
-        return `<option value="${char}">${label} — ${hint}</option>`;
-      }).join("")}
-    </select>
-    <div class="freq-display">${freqBoxesHtml()}</div>
-    <button id="send">送る</button>
-  </div>
-  <hr />
-  <div id="rx-section">
-    <h2>受信</h2>
-    <button id="mic-start">マイク開始</button>
-    <button id="mic-stop" disabled>停止</button>
-    <div class="freq-display">${freqBoxesHtml()}</div>
-    <p id="rx-current-char" class="current-char">―</p>
-    <p>受信履歴: <span id="rx-history"></span></p>
-    <details>
-      <summary>デバッグ情報</summary>
-      <pre id="rx-debug"></pre>
-    </details>
+
+    <div id="mode-select">
+      <p>「送る」または「受けとる」を選んでください</p>
+      <button id="mode-tx">送る</button>
+      <button id="mode-rx">受けとる</button>
+    </div>
+
+    <div id="tx-section" hidden>
+      <button class="back-button" data-mode="select">← 戻る</button>
+      <p>送りたい文字を選んで「送る」を押してください</p>
+      <select id="char-select">
+        ${ALPHABET.map((char) => {
+          const pattern = indexToPattern(charToIndex(char));
+          const hint = activeNotes(pattern).join("+");
+          const label = char === " " ? "(スペース)" : char;
+          return `<option value="${char}">${label} — ${hint}</option>`;
+        }).join("")}
+      </select>
+      <div class="freq-display">${freqBoxesHtml()}</div>
+      <button id="send">送る</button>
+    </div>
+
+    <div id="rx-section" hidden>
+      <button class="back-button" data-mode="select">← 戻る</button>
+      <p>マイクで音を受け取ります</p>
+      <button id="mic-start">マイク開始</button>
+      <button id="mic-stop" disabled>停止</button>
+      <div class="freq-display">${freqBoxesHtml()}</div>
+      <p id="rx-current-char" class="current-char">―</p>
+      <p>受信履歴: <span id="rx-history"></span></p>
+      <details>
+        <summary>デバッグ情報</summary>
+        <pre id="rx-debug"></pre>
+      </details>
+    </div>
   </div>
 `;
 
@@ -139,3 +150,31 @@ micStartButton.addEventListener("click", () => {
 });
 
 micStopButton.addEventListener("click", stopReceiving);
+
+// --- モード切り替え ---
+// 受信モードから離れるときは、バックグラウンドでマイクを掴んだままにしないよう必ず停止する。
+
+type Mode = "select" | "tx" | "rx";
+
+const modeSections: Record<Mode, HTMLElement> = {
+  select: document.getElementById("mode-select")!,
+  tx: txSection,
+  rx: rxSection,
+};
+
+function setMode(mode: Mode): void {
+  if (mode !== "rx") {
+    stopReceiving();
+  }
+  for (const [key, section] of Object.entries(modeSections)) {
+    section.hidden = key !== mode;
+  }
+}
+
+document.getElementById("mode-tx")!.addEventListener("click", () => setMode("tx"));
+document.getElementById("mode-rx")!.addEventListener("click", () => setMode("rx"));
+document.querySelectorAll<HTMLButtonElement>(".back-button").forEach((button) => {
+  button.addEventListener("click", () => setMode("select"));
+});
+
+setMode("select");
