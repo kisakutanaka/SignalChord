@@ -32,13 +32,20 @@ Settings→Pages→SourceをGitHub Actionsに切り替える作業はユーザ�
 
 ## Phase 1: 送信モード — 5音の生成・再生
 
-- [ ] Web Audio APIで5つの周波数（C5/D5/E5/G5/A5）をOscillatorで個別に鳴らせるようにする
-- [ ] 5bitのビットパターン（どの音を鳴らすか）を指定すると、該当する音だけが同時に再生される
+- [x] Web Audio APIで5つの周波数（C5/D5/E5/G5/A5）をOscillatorで個別に鳴らせるようにする
+- [x] 5bitのビットパターン（どの音を鳴らすか）を指定すると、該当する音だけが同時に再生される
       仕組みを作る
-- [ ] 最小UI: ボタンでテスト送信し、スピーカーから音が出ることを確認する
+- [x] 最小UI: ボタンでテスト送信し、スピーカーから音が出ることを確認する
 - [ ] 実機確認: スマートフォンのスピーカーで実際に鳴ることを確認する
 
-メモ: (未着手)
+メモ: `src/audio/frequencies.ts`にNOTE_FREQUENCIES（C5〜A5）を定義し、`src/audio/transmitter.ts`の
+`playPattern()`が5要素のBitPattern（NOTE_NAMESと同じ並び）を受け取り、trueの音だけを
+OscillatorNode+GainNodeで同時再生する。複数音同時再生時のクリッピングを避けるため
+1音あたりのgainを0.15に設定（5音全部でも1.0を超えない）。oscillatorの`ended`イベントで
+disconnectし、再生のたびにノードが残り続けないようにした。最小UIとして5音のチェックボックスと
+「テスト送信」ボタンをmain.tsに実装。Playwrightでページを起動し、コンソールエラー・pageerrorが
+出ないこと、チェックボックス5個の描画とクリック操作が正常に動くことを確認済み（ヘッドレス
+ブラウザのため実際の音の可聴確認はできていない）。実機での可聴確認が残タスク。
 
 ---
 
