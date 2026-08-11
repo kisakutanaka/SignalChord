@@ -38,8 +38,8 @@ app.innerHTML = `
 
       <hr />
       <div class="text-send">
-        <p>複数文字をまとめてタイプして送ることもできます（使える文字: A-Z, 半角スペース, . , ! ?）</p>
-        <input type="text" id="text-input" placeholder="HELLO" />
+        <p>複数文字をまとめてタイプして送ることもできます（使える文字: ひらがな46音・句読点「、。」・「!」「?」・半角スペース）</p>
+        <input type="text" id="text-input" placeholder="こんにちは" />
         <button id="send-text">まとめて送る</button>
         <p id="text-send-status"></p>
       </div>
@@ -75,11 +75,11 @@ app.innerHTML = `
     <section class="explanation">
       <h2>仕組みについて</h2>
       <p>
-        C5・D5・E5・G5・A5という5つの高さの音は、それぞれ別々の情報の通り道（チャンネル）です。
+        C5・D5・E5・G5・A5・C6という6つの高さの音は、それぞれ別々の情報の通り道（チャンネル）です。
         複数の音を同時に鳴らすことで、一度に複数の情報を送っています。
       </p>
       <p>
-        受信側はマイクで拾った音をFFT（周波数解析）で5つの音に分解し、どの音が鳴っていたかを
+        受信側はマイクで拾った音をFFT（周波数解析）で6つの音に分解し、どの音が鳴っていたかを
         調べることで元の文字を復元しています。
       </p>
       <p>
@@ -157,9 +157,9 @@ sendButton.addEventListener("click", () => {
   }, SEND_DURATION_SECONDS * 1000);
 });
 
-// 入力文字列のうち、大文字化してALPHABETに含まれる文字だけを送信対象として取り出す。
+// 入力文字列のうち、ALPHABETに含まれる文字（ひらがな46音+句読点等）だけを送信対象として取り出す。
 function sanitizeText(input: string): Character[] {
-  return Array.from(input.toUpperCase()).filter((ch): ch is Character =>
+  return Array.from(input).filter((ch): ch is Character =>
     (ALPHABET as readonly string[]).includes(ch),
   );
 }

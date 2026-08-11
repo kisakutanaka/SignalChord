@@ -1,9 +1,9 @@
 import { FREQUENCIES, NOTE_NAMES } from "./frequencies";
 
-// NOTE_NAMES と同じ並び（C5,D5,E5,G5,A5）で、鳴らす音をtrueにする5要素のビットパターン。
-export type BitPattern = readonly [boolean, boolean, boolean, boolean, boolean];
+// NOTE_NAMES と同じ並び（C5,D5,E5,G5,A5,C6）で、鳴らす音をtrueにする6要素のビットパターン。
+export type BitPattern = readonly [boolean, boolean, boolean, boolean, boolean, boolean];
 
-export const SILENT_PATTERN: BitPattern = [false, false, false, false, false];
+export const SILENT_PATTERN: BitPattern = [false, false, false, false, false, false];
 
 // 複数音を同時に鳴らしたときの音量合算によるクリッピングを避けるためのゲイン。
 const GAIN_PER_NOTE = 0.15;
